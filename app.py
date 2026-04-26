@@ -1,11 +1,9 @@
 """
 GrievAI Production Server v2.1
 - Local : SQLite + OTP/Email test mode (console mein print)
-- Railway: PostgreSQL + Twilio SMS + Gmail email alerts
+- Railway: PostgreSQL + Twilio SMS + Resend email alerts
 """
-import os, random, string, sqlite3, smtplib, threading
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import os, random, string, sqlite3, threading, requests
 from datetime import datetime, timedelta
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -29,11 +27,10 @@ TWILIO_TOKEN  = os.environ.get('TWILIO_AUTH_TOKEN', '')
 TWILIO_FROM   = os.environ.get('TWILIO_PHONE_NUMBER', '')
 USE_TWILIO    = bool(TWILIO_SID and TWILIO_TOKEN and TWILIO_FROM)
 
-# Email config
-GMAIL_USER    = os.environ.get('GMAIL_USER', '')
-GMAIL_PASS    = os.environ.get('GMAIL_APP_PASSWORD', '')
-ALERT_EMAILS  = os.environ.get('ALERT_EMAILS', '')   # comma separated officer emails
-USE_EMAIL     = bool(GMAIL_USER and GMAIL_PASS and ALERT_EMAILS)
+# Resend Email config
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+ALERT_EMAILS   = os.environ.get('ALERT_EMAILS', '')
+USE_EMAIL      = bool(RESEND_API_KEY and ALERT_EMAILS)
 
 BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
 SQLITE_PATH   = os.path.join(BASE_DIR, 'data', 'grievai.db')
@@ -170,7 +167,7 @@ def init_db():
     print(f"[DB] Ready — {'PostgreSQL' if USE_POSTGRES else 'SQLite'}")
 
 
-# ── Email Alert Service ───────────────────────────────────────────────────────
+# ── Email Alert Service (Resend) ──────────────────────────────────────────────
 PRIORITY_EMOJI = {
     'critical': '🚨 CRITICAL',
     'high':     '🔴 HIGH',
@@ -179,9 +176,8 @@ PRIORITY_EMOJI = {
 }
 
 def send_email_alert(complaint, ai):
-    """Send email alert to all officers — runs in background thread"""
+    """Send email alert to all officers via Resend — runs in background thread"""
     if not USE_EMAIL:
-        # TEST MODE — print in console
         print(f"\n{'='*55}")
         print(f"  [EMAIL ALERT - TEST MODE]")
         print(f"  Complaint ID : {complaint['complaint_id']}")
@@ -192,7 +188,7 @@ def send_email_alert(complaint, ai):
         print(f"  Description  : {complaint['raw_text'][:100]}...")
         print(f"  Officer      : {ai['officer']}")
         print(f"  ETA          : {ai['eta']}")
-        print(f"  [Real email ke liye GMAIL_USER set karo in .env]")
+        print(f"  [Real email ke liye RESEND_API_KEY set karo in .env]")
         print(f"{'='*55}\n")
         return
 
@@ -208,87 +204,48 @@ def send_email_alert(complaint, ai):
 <head><meta charset="UTF-8"/></head>
 <body style="font-family:Arial,sans-serif;background:#f8fafc;padding:20px;">
   <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-
-    <!-- Header -->
     <div style="background:{'#dc2626' if ai['priority']=='critical' else '#1a56db'};padding:20px 24px;">
       <h2 style="color:#fff;margin:0;font-size:18px;">🏛️ GrievAI Portal — Madhya Pradesh Government</h2>
       <p style="color:rgba(255,255,255,0.85);margin:4px 0 0;font-size:13px;">New Citizen Complaint Received</p>
     </div>
-
-    <!-- Body -->
     <div style="padding:24px;">
-
-      <!-- Complaint ID + Priority -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-        <div>
-          <div style="font-size:11px;color:#64748b;margin-bottom:2px;">COMPLAINT ID</div>
-          <div style="font-size:20px;font-weight:700;color:#0f172a;font-family:monospace;">{complaint['complaint_id']}</div>
-        </div>
-        <div style="background:{'#fee2e2' if ai['priority']=='critical' else '#fef3c7' if ai['priority']=='high' else '#eff6ff'};
-                    color:{'#dc2626' if ai['priority']=='critical' else '#d97706' if ai['priority']=='high' else '#1a56db'};
-                    padding:6px 14px;border-radius:999px;font-size:12px;font-weight:700;">
-          {pri_label}
-        </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;color:#64748b;margin-bottom:2px;">COMPLAINT ID</div>
+        <div style="font-size:20px;font-weight:700;color:#0f172a;font-family:monospace;">{complaint['complaint_id']}</div>
       </div>
-
-      <!-- Info Grid -->
       <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:11px;color:#64748b;width:130px;">👤 CITIZEN</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;font-weight:500;">{complaint['citizen_name']} — {complaint['mobile']}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">🏢 DEPARTMENT</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;font-weight:500;color:#1a56db;">{ai['department']} — {ai['dept_full']}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">📍 LOCATION</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{complaint.get('area','—')}, {complaint.get('district','—')}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">🏷️ CATEGORY</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['category']}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">👮 OFFICER</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['officer']}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">⏱️ ETA</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['eta']}</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">🤖 AI CONFIDENCE</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['confidence']}%</td>
-        </tr>
-        <tr>
-          <td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">📅 SUBMITTED</td>
-          <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;font-family:monospace;">{datetime.now().strftime('%d %b %Y, %I:%M %p')}</td>
-        </tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;width:130px;">👤 CITIZEN</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{complaint['citizen_name']} — {complaint['mobile']}</td></tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">🏢 DEPARTMENT</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;color:#1a56db;">{ai['department']} — {ai['dept_full']}</td></tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">📍 LOCATION</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{complaint.get('area','—')}, {complaint.get('district','—')}</td></tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">🏷️ CATEGORY</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['category']}</td></tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">👮 OFFICER</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['officer']}</td></tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">⏱️ ETA</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['eta']}</td></tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">🤖 AI CONFIDENCE</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{ai['confidence']}%</td></tr>
+        <tr><td style="padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;font-size:11px;color:#64748b;">📅 SUBMITTED</td>
+            <td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:13px;">{datetime.now().strftime('%d %b %Y, %I:%M %p')}</td></tr>
       </table>
-
-      <!-- Complaint Text -->
       <div style="background:#eff6ff;border-left:4px solid #1a56db;padding:14px 16px;border-radius:0 8px 8px 0;margin-bottom:16px;">
         <div style="font-size:11px;color:#64748b;margin-bottom:6px;font-weight:600;">COMPLAINT DESCRIPTION</div>
         <div style="font-size:13px;color:#0f172a;line-height:1.7;">{complaint['raw_text']}</div>
       </div>
-
-      <!-- AI Summary -->
       <div style="background:#f8fafc;border:1px solid #e2e8f0;padding:12px 14px;border-radius:8px;margin-bottom:20px;">
         <div style="font-size:11px;color:#64748b;margin-bottom:4px;font-weight:600;">🤖 AI ANALYSIS</div>
         <div style="font-size:12px;color:#475569;line-height:1.6;">{ai['summary']}</div>
       </div>
-
-      <!-- Action Button -->
       <div style="text-align:center;">
-        <a href="{os.environ.get('APP_URL','http://localhost:8000')}" 
+        <a href="{os.environ.get('APP_URL','http://localhost:8000')}"
            style="background:#1a56db;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;display:inline-block;">
           View in GrievAI Portal →
         </a>
       </div>
     </div>
-
-    <!-- Footer -->
     <div style="background:#f8fafc;padding:14px 24px;border-top:1px solid #e2e8f0;text-align:center;">
       <p style="font-size:11px;color:#94a3b8;margin:0;">
         GrievAI Portal · Madhya Pradesh Government · Auto-generated alert<br/>
@@ -299,22 +256,29 @@ def send_email_alert(complaint, ai):
 </body>
 </html>"""
 
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = subject
-            msg['From']    = f"GrievAI Portal <{GMAIL_USER}>"
-            msg['To']      = ', '.join(recipients)
-            msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+            # Send via Resend API
+            response = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {RESEND_API_KEY}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "from": "GrievAI Portal <onboarding@resend.dev>",
+                    "to": recipients,
+                    "subject": subject,
+                    "html": html_body
+                }
+            )
 
-            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-                smtp.login(GMAIL_USER, GMAIL_PASS)
-                smtp.sendmail(GMAIL_USER, recipients, msg.as_string())
-
-            print(f"[EMAIL] Alert sent to: {', '.join(recipients)}")
+            if response.status_code == 200 or response.status_code == 201:
+                print(f"[EMAIL] Alert sent to: {', '.join(recipients)}")
+            else:
+                print(f"[EMAIL] Error: {response.status_code} — {response.text}")
 
         except Exception as e:
             print(f"[EMAIL] Error: {e}")
 
-    # Run in background — don't block API response
     threading.Thread(target=_send, daemon=True).start()
 
 
@@ -424,7 +388,7 @@ def health():
         "status": "ok", "version": "2.1.0",
         "db":    "PostgreSQL" if USE_POSTGRES else "SQLite",
         "otp":   "Twilio"    if USE_TWILIO   else "TestMode",
-        "email": "Gmail"     if USE_EMAIL    else "TestMode",
+        "email": "Resend"    if USE_EMAIL    else "TestMode",
         "timestamp": datetime.now().isoformat()
     })
 
@@ -436,7 +400,7 @@ def complaints():
         for f in ['citizen_name', 'mobile', 'raw_text']:
             if not d.get(f,'').strip(): return err(f"'{f}' is required")
         mobile = d['mobile'].strip()
-        
+
         text = d['raw_text'].strip()
         ai   = classify_complaint(text)
         cid  = gen_id()
@@ -472,7 +436,6 @@ def complaints():
         row = to_dict(cur, cur.fetchone())
         conn.close()
 
-        # ── Send email alert in background ────────────────────────────────────
         send_email_alert({
             'complaint_id': cid,
             'citizen_name': d.get('citizen_name',''),
@@ -488,7 +451,7 @@ def complaints():
             "message": f"Complaint {cid} submitted → {ai['department']}"
         }), 201
 
-    else:  # GET
+    else:
         dept     = request.args.get('department')
         status   = request.args.get('status')
         priority = request.args.get('priority')
@@ -616,6 +579,6 @@ if __name__ == '__main__':
     print(f"\n  URL   : http://localhost:{port}")
     print(f"  DB    : {'PostgreSQL' if USE_POSTGRES else 'SQLite'}")
     print(f"  OTP   : {'Twilio SMS' if USE_TWILIO else 'TEST — OTP prints here'}")
-    print(f"  EMAIL : {'Gmail alerts ON' if USE_EMAIL else 'TEST — Email prints here'}")
+    print(f"  EMAIL : {'Resend alerts ON' if USE_EMAIL else 'TEST — Email prints here'}")
     print(f"\n  Press Ctrl+C to stop\n")
     app.run(host='0.0.0.0', port=port, debug=False)
