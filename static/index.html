@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>GrievAI Portal — Madhya Pradesh Government</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#1a56db;--blue2:#1447c7;--blue-l:#c1c7cd;
+  --green:#0d9488;--green-l:#d1fae5;
+  --red:#dc2626;--red-l:#fee2e2;
+  --amber:#d97706;--amber-l:#fef3c7;
+  --purple:#7c3aed;--purple-l:#ede9fe;
+  --bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;
+  --text:#0f172a;--text2:#64748b;--text3:#94a3b8;
+  --border:#e2e8f0;--border2:#cbd5e1;
+  --radius:14px;--radius-sm:9px;--radius-pill:999px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.04);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#0f172a;--bg2:#1e293b;--bg3:#0f172a;
+  --text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;
+  --border:#1e293b;--border2:#334155;
+  --blue-l:rgba(26,86,219,.15);--green-l:rgba(13,148,136,.15);
+  --red-l:rgba(220,38,38,.15);--amber-l:rgba(217,119,6,.15);
+  --purple-l:rgba(124,58,237,.15);
+}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.65)}50%{opacity:1;transform:scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes livePulse{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.4)}70%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4)}70%{box-shadow:0 0 0 8px rgba(220,38,38,0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+html{font-size:14px;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* NAV */
+.nav{display:flex;align-items:center;padding:0 1.5rem;height:56px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;backdrop-filter:blur(8px);}
+.logo{display:flex;align-items:center;gap:10px;margin-right:2rem;}
+.logo-box{width:32px;height:32px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;box-shadow:0 2px 8px rgba(26,86,219,.35);}
+.logo-text{font-size:14px;font-weight:600;}.logo-sub{font-size:10px;color:var(--text2);}
+.ntabs{display:flex;height:100%;gap:1px;}
+.ntab{padding:0 1rem;height:100%;display:flex;align-items:center;font-size:12.5px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;user-select:none;}
+.ntab:hover{color:var(--text);}
+.ntab.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:500;}
+.tbadge{margin-left:5px;background:var(--red-l);color:var(--red);font-size:9.5px;padding:1px 5px;border-radius:var(--radius-pill);font-weight:500;}
+.nr{margin-left:auto;display:flex;align-items:center;gap:6px;}
+.npill{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 11px;border-radius:var(--radius-pill);border:1px solid var(--border);background:var(--bg2);color:var(--text2);}
+.npill-live{background:var(--green-l);border-color:rgba(13,148,136,.25);color:var(--green);}
+.npill-urg{background:var(--red-l);border-color:rgba(220,38,38,.25);color:var(--red);}
+.livdot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:pulse 1.6s infinite,livePulse 2s infinite;}
+
+/* VIEWS */
+.view{display:none;padding:1.4rem;max-width:900px;margin:0 auto;}
+.view.on{display:block;animation:fadeUp .3s ease both;}
+
+/* CARDS */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;box-shadow:var(--shadow);}
+
+/* HERO */
+.hero{text-align:center;padding:.9rem 0 .6rem;}
+.hero h2{font-size:20px;font-weight:600;margin-bottom:5px;}
+.hero p{font-size:12px;color:var(--text2);}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--blue-l);color:var(--blue);font-size:11px;padding:4px 12px;border-radius:var(--radius-pill);margin-bottom:10px;font-weight:500;}
+
+/* OTP MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.modal-overlay.hide{display:none;}
+.modal{background:var(--bg);border-radius:var(--radius);padding:1.75rem;width:90%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:scaleIn .25s ease both;}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:4px;}
+.modal-sub{font-size:12px;color:var(--text2);margin-bottom:1.2rem;line-height:1.5;}
+.otp-inputs{display:flex;gap:8px;justify-content:center;margin:1rem 0;}
+.otp-input{width:44px;height:52px;border:2px solid var(--border);border-radius:10px;text-align:center;font-size:22px;font-weight:600;font-family:'DM Mono',monospace;background:var(--bg2);color:var(--text);outline:none;transition:border-color .18s;}
+.otp-input:focus{border-color:var(--blue);background:var(--bg);}
+.otp-input.error{border-color:var(--red);animation:shake .3s ease;}
+.otp-timer{text-align:center;font-size:11px;color:var(--text3);margin-bottom:.75rem;}
+.otp-resend{color:var(--blue);cursor:pointer;font-weight:500;}
+.otp-resend:hover{text-decoration:underline;}
+
+/* FORM */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.grow{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.gl{font-size:11px;color:var(--text2);font-weight:600;letter-spacing:.4px;}
+.gi,.gs,.gt{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--bg2);color:var(--text);font-family:inherit;outline:none;transition:border-color .18s,box-shadow .18s;}
+.gi:focus,.gs:focus,.gt:focus{border-color:var(--blue);background:var(--bg);box-shadow:0 0 0 3px rgba(26,86,219,.1);}
+.gt{resize:vertical;min-height:100px;}
+.lrow{display:flex;gap:5px;flex-wrap:wrap;}
+.lbtn{padding:4px 10px;border:1px solid var(--border);border-radius:var(--radius-pill);font-size:11px;cursor:pointer;background:transparent;color:var(--text2);font-family:inherit;transition:all .16s;}
+.lbtn.on{background:var(--blue);color:#fff;border-color:var(--blue);font-weight:500;}
+.tbtn{padding:5px 11px;border:1px solid var(--border);border-radius:var(--radius-pill);font-size:11px;cursor:pointer;background:transparent;color:var(--text2);font-family:inherit;transition:all .16s;}
+.tbtn:hover{background:var(--bg3);}
+
+/* MOBILE FIELD with verified badge */
+.mobile-wrap{position:relative;}
+.mobile-verified-badge{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:2px 8px;border-radius:var(--radius-pill);display:none;}
+.mobile-verified-badge.show{display:block;}
+
+/* MIC BUTTON */
+.textarea-wrap{position:relative;}
+.gt-padded{padding-right:48px!important;}
+.mic-btn{position:absolute;right:8px;bottom:8px;width:34px;height:34px;border-radius:50%;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(26,86,219,.35);transition:all .2s;z-index:2;}
+.mic-btn:hover{transform:scale(1.08);}
+.mic-btn.rec{background:var(--red);animation:micPulse 1s ease-in-out infinite;}
+.mic-btn svg{width:15px;height:15px;fill:#fff;pointer-events:none;}
+.mic-status{display:none;align-items:center;gap:6px;margin-top:5px;font-size:11px;color:var(--red);background:var(--red-l);padding:4px 10px;border-radius:var(--radius-pill);}
+.mic-status.show{display:flex;}
+.mic-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1s infinite;}
+
+/* SUBMIT BTN */
+.sbtn{width:100%;padding:11px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:6px;box-shadow:0 2px 10px rgba(26,86,219,.3);}
+.sbtn:hover{background:var(--blue2);transform:translateY(-1px);}
+.sbtn:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none;}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;}
+
+/* CHIPS */
+.chip{font-size:11px;padding:3px 9px;border-radius:var(--radius-pill);font-weight:500;display:inline-flex;align-items:center;gap:3px;}
+.cb{background:var(--blue-l);color:#1d4ed8;}
+.cr{background:var(--red-l);color:var(--red);}
+.cg{background:var(--green-l);color:#065f46;}
+.ca{background:var(--amber-l);color:var(--amber);}
+.cp2{background:var(--purple-l);color:var(--purple);}
+
+/* AI RESULT */
+.aibox{border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-top:.75rem;background:var(--bg2);display:none;}
+.aibox.show{display:block;animation:scaleIn .3s ease both;}
+.aihead{display:flex;align-items:center;gap:7px;margin-bottom:10px;flex-wrap:wrap;}
+.aimets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.aim{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px;}
+.aiml{font-size:10px;color:var(--text2);margin-bottom:3px;font-weight:500;letter-spacing:.3px;}
+.aimv{font-size:14px;font-weight:500;}
+.cbar{height:4px;margin-top:6px;background:var(--bg3);border-radius:2px;overflow:hidden;}
+.cbarf{height:100%;background:var(--blue);border-radius:2px;width:0;transition:width 1.3s ease;}
+.rrow{display:flex;align-items:center;gap:7px;padding:9px 11px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;margin-bottom:9px;}
+.asum{font-size:12px;color:var(--text2);line-height:1.6;padding:10px 12px;background:var(--blue-l);border-left:3px solid var(--blue);border-radius:0 var(--radius-sm) var(--radius-sm) 0;margin-bottom:10px;}
+.aacts{display:flex;gap:6px;}
+.aact{flex:1;padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:11px;cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit;transition:all .16s;}
+.aact:hover{background:var(--bg2);}
+.abp{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+/* DASHBOARD */
+.mcards{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:1rem;}
+.mc{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px;}
+.mcl{font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500;}
+.mcv{font-size:22px;font-weight:600;letter-spacing:-.5px;}
+.mcs{font-size:11px;margin-top:3px;}
+.up{color:#059669;}.dn{color:var(--red);}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.ct{font-size:13px;font-weight:600;margin-bottom:10px;}
+.ci{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg);transition:all .16s;margin-bottom:5px;}
+.ci:hover{border-color:var(--blue);transform:translateX(3px);}
+.cid{font-size:10px;color:var(--text2);min-width:74px;font-family:'DM Mono',monospace;}
+.ctxt{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cst{font-size:10px;display:flex;align-items:center;gap:3px;white-space:nowrap;}
+.sd{width:5px;height:5px;border-radius:50%;display:inline-block;}
+.so{background:var(--amber);}.sp{background:var(--blue);}.sr{background:#10b981;}
+.dbrow{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.dbl{font-size:11px;min-width:80px;color:var(--text2);}
+.dbt{flex:1;height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.dbf{height:100%;border-radius:4px;width:0;transition:width .95s ease;}
+.dbn{font-size:11px;min-width:32px;text-align:right;color:var(--text2);}
+.pi{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
+.pb{font-size:10px;padding:2px 7px;border-radius:var(--radius-pill);font-weight:500;min-width:46px;text-align:center;}
+.pct{background:var(--red-l);color:var(--red);}
+.pht{background:var(--amber-l);color:var(--amber);}
+.pmt{background:var(--blue-l);color:#1d4ed8;}
+.ptxt{flex:1;font-size:12px;}
+.page{font-size:10px;color:var(--text3);}
+
+/* TRACKING */
+.twrap{display:flex;gap:7px;margin-bottom:1rem;align-items:center;}
+.tlcard{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;}
+.div2{height:1px;background:var(--border);margin:.85rem 0;}
+.tls{display:flex;gap:12px;padding-bottom:20px;}
+.tls:last-child{padding-bottom:0;}
+.tlw{display:flex;flex-direction:column;align-items:center;}
+.tldot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;}
+.tlline{width:2px;flex:1;margin-top:4px;min-height:18px;border-radius:1px;}
+.dn2 .tldot{background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,.15);}
+.dn2 .tlline{background:#10b981;}
+.ac2 .tldot{background:var(--blue);box-shadow:0 0 0 4px rgba(26,86,219,.18);animation:pulse 1.8s infinite;}
+.ac2 .tlline{background:var(--border);}
+.pd2 .tldot{background:var(--bg2);border:2px solid var(--border2);}
+.pd2 .tlline{background:var(--border);}
+.tlc{flex:1;}.tlt{font-size:13px;font-weight:500;}
+.tld{font-size:11.5px;color:var(--text2);margin-top:2px;line-height:1.5;}
+.tlts{font-size:10px;color:var(--text3);margin-top:3px;font-family:'DM Mono',monospace;}
+.status-panel{margin-top:10px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.status-select{padding:5px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--bg);color:var(--text);font-family:inherit;cursor:pointer;margin-right:6px;}
+.upd-btn{padding:5px 12px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-sm);font-size:11px;cursor:pointer;font-family:inherit;}
+
+/* ANALYTICS */
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.achrt{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;}
+.actt{font-size:12px;font-weight:500;margin-bottom:8px;}
+.cw{position:relative;width:100%;height:185px;}
+.astats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+</style>
+</head>
+<body>
+
+
+<nav class="nav">
+  <div class="logo">
+    <div class="logo-box">C</div>
+    <div><div class="logo-text">Complain Portal</div><div class="logo-sub">Madhya Pradesh Government</div></div>
+  </div>
+  <div class="ntabs">
+    <div class="ntab on" onclick="sw('submit',this)">Submit Complaint</div>
+    <div class="ntab" onclick="sw('dashboard',this)">Dashboard</div>
+    <div class="ntab" onclick="sw('tracking',this)">Track Complaint <span class="tbadge">Live</span></div>
+    <div class="ntab" onclick="sw('analytics',this)">Analytics</div>
+  </div>
+  <div class="nr">
+    <div class="npill npill-live" id="api-status-pill"><span class="livdot"></span>Connecting…</div>
+    <div class="npill npill-urg" id="critical-pill">— Critical</div>
+  </div>
+</nav>
+
+<!-- SUBMIT COMPLAINT -->
+<div class="view on" id="vs">
+  <div class="hero">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M4 6l1.5 1.5L8 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      AI-powered · Real-time Classification
+    </div>
+    <h2>Submit a Citizen Complaint</h2>
+
+  </div>
+
+  <div class="card" id="form-card">
+    <div class="frow">
+      <div class="grow">
+        <label class="gl">FULL NAME *</label>
+        <input class="gi" placeholder="Ramesh Kumar" id="inpN"/>
+      </div>
+      <div class="grow">
+        <label class="gl">MOBILE NUMBER * <span id="mob-verified-tag" style="display:none;color:#059669;font-size:10px;">✓ Verified</span></label>
+        <div class="mobile-wrap">
+          <input class="gi" placeholder="+91 98765 43210" id="inpM" type="tel" oninput="onMobileChange()"/>
+          <span class="mobile-verified-badge" id="mob-badge">✓ Verified</span>
+        </div>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="grow">
+        <label class="gl">DISTRICT</label>
+        <select class="gs" id="inpD">
+          <option>Indore</option><option>Bhopal</option><option>Jabalpur</option>
+          <option>Gwalior</option><option>Ujjain</option><option>Rewa</option>
+          <option>Sagar</option><option>Dewas</option><option>Satna</option><option>Other</option>
+        </select>
+      </div>
+      <div class="grow">
+        <label class="gl">WARD / AREA</label>
+        <input class="gi" placeholder="Ward 12, Vijay Nagar" id="inpA"/>
+      </div>
+    </div>
+    <div class="grow">
+      <label class="gl">COMPLAINT LANGUAGE</label>
+      <div class="lrow" id="lang-row">
+        <button class="lbtn on" onclick="selL(this,'en')">English</button>
+        <button class="lbtn" onclick="selL(this,'hi')">हिंदी</button>
+        <button class="lbtn" onclick="selL(this,'mr')">मराठी</button>
+        <button class="lbtn" onclick="selL(this,'gu')">ગુજરાતી</button>
+        <button class="lbtn" onclick="selL(this,'ta')">தமிழ்</button>
+        <button class="lbtn" onclick="selL(this,'te')">తెలుగు</button>
+      </div>
+    </div>
+    <div class="grow">
+      <label class="gl">COMPLAINT DESCRIPTION * &nbsp;<span style="font-size:10px;color:var(--text3);">— ya mic se bolein 🎤</span></label>
+      <div class="textarea-wrap">
+        <textarea class="gt gt-padded" id="inpC" placeholder="Apni problem detail mein likhein… ya neeche mic button dabake bolein। AI Hindi, English aur regional languages samajhta hai।"></textarea>
+        <button class="mic-btn" id="micBtn" onclick="toggleMic()" title="Voice input">
+          <svg id="micIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v6a2 2 0 0 0 4 0V5a2 2 0 0 0-2-2zm-7 8a7 7 0 0 0 13.927 1H21a9 9 0 0 1-8 8.944V22h-2v-2.056A9 9 0 0 1 3 11h2z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="mic-status" id="micStatus">
+        <span class="mic-dot"></span>
+        <span>Recording… bolna band karo toh mic button dobara click karo (max 30s)</span>
+      </div>
+    </div>
+    <div class="grow">
+      <label class="gl">QUICK TEMPLATES</label>
+      <div class="lrow">
+        <button class="tbtn" onclick="tpl('water')">💧 Water supply</button>
+        <button class="tbtn" onclick="tpl('road')">🛣️ Road damage</button>
+        <button class="tbtn" onclick="tpl('power')">⚡ Power outage</button>
+        <button class="tbtn" onclick="tpl('sanit')">🗑️ Garbage</button>
+        <button class="tbtn" onclick="tpl('hindi')">🇮🇳 हिंदी नमूना</button>
+      </div>
+    </div>
+    <button class="sbtn" id="mainBtn" onclick="submitComplaint()">
+      🤖 Analyze &amp; Submit with AI
+    </button>
+  </div>
+
+  <div class="aibox" id="aibox">
+    <div class="aihead">
+      <span style="font-size:13px;font-weight:600;">AI Analysis Result</span>
+      <span class="chip cb" id="rDept">—</span>
+      <span class="chip" id="rPri">—</span>
+      <span style="font-size:10px;color:var(--text3);margin-left:auto;">Saved to database ✓</span>
+    </div>
+    <div class="aimets">
+      <div class="aim"><div class="aiml">CATEGORY</div><div class="aimv" id="rCat">—</div></div>
+      <div class="aim"><div class="aiml">CONFIDENCE</div><div class="aimv" id="rConf">—</div><div class="cbar"><div class="cbarf" id="cbarF"></div></div></div>
+      <div class="aim"><div class="aiml">EST. RESOLUTION</div><div class="aimv" id="rEta">—</div></div>
+    </div>
+    <div class="rrow">
+      <span style="font-size:11px;color:var(--text2);">Routed to</span>
+      <span class="chip cb" id="rOff">—</span>
+      <span style="color:var(--text3);">→</span>
+      <span style="font-size:12px;" id="rDeptF">—</span>
+    </div>
+    <div class="asum" id="rSum"></div>
+    <div class="aacts">
+      <button class="aact" onclick="cpId(this)" id="cpIdBtn">Copy Complaint ID</button>
+      <button class="aact" onclick="trackThis()">Track Status →</button>
+      <button class="aact abp" onclick="reset2()">Submit Another</button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="view" id="vd">
+  <div class="mcards" id="dash-metrics">
+    <div class="mc"><div class="mcl">Total Complaints</div><div class="mcv" id="m-total">—</div><div class="mcs up">Database se</div></div>
+    <div class="mc"><div class="mcl">Resolved</div><div class="mcv" id="m-resolved">—</div><div class="mcs up">Live</div></div>
+    <div class="mc"><div class="mcl">Avg Resolution</div><div class="mcv" id="m-avg">—</div><div class="mcs dn">Days</div></div>
+    <div class="mc"><div class="mcl">AI Accuracy</div><div class="mcv" id="m-acc">—</div><div class="mcs up">Live model</div></div>
+  </div>
+  <div class="dgrid">
+    <div class="card">
+      <div class="ct">Recent Complaints <button class="tbtn" onclick="loadDashboard()" style="float:right;padding:3px 8px;font-size:10px;">↻ Refresh</button></div>
+      <div id="complaint-list"><div style="font-size:12px;color:var(--text2);padding:8px;">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">Department Load</div>
+      <div id="dept-bars"><div style="font-size:12px;color:var(--text2);padding:8px;">Loading…</div></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:10px;">
+    <div class="ct">Critical &amp; High Priority</div>
+    <div id="priority-list"><div style="font-size:12px;color:var(--text2);padding:8px;">Loading…</div></div>
+  </div>
+</div>
+
+<!-- TRACKING -->
+<div class="view" id="vt">
+  <div class="twrap">
+    <input class="gi" style="max-width:320px;" placeholder="Complaint ID dalein — e.g. GRV-260424-1234" id="trid"/>
+    <button class="sbtn" style="width:auto;padding:8px 18px;" onclick="trackComplaint()">Track →</button>
+  </div>
+  <div id="tl-area"><div style="font-size:12px;color:var(--text2);padding:8px 0;">Complaint ID daalo aur Track dabao।</div></div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="view" id="va">
+  <div class="agrid">
+    <div class="achrt"><div class="actt">Complaints by Department</div><div class="cw"><canvas id="cc"></canvas></div></div>
+    <div class="achrt"><div class="actt">Weekly Complaint Trend</div><div class="cw"><canvas id="ct2"></canvas></div></div>
+    <div class="achrt"><div class="actt">Avg Resolution Days by Dept</div><div class="cw"><canvas id="cr"></canvas></div></div>
+    <div class="achrt"><div class="actt">AI Accuracy Over Time</div><div class="cw"><canvas id="cai"></canvas></div></div>
+  </div>
+  <div class="astats">
+    <div class="mc"><div class="mcl">Languages Detected</div><div class="mcv" id="an-langs">6</div></div>
+    <div class="mc"><div class="mcl">AI Accuracy</div><div class="mcv" id="an-acc">94.2%</div><div class="mcs up">↑ Vs 60% manual</div></div>
+    <div class="mc"><div class="mcl">Classify Time</div><div class="mcv">~0.8s</div><div class="mcs up">NLP engine</div></div>
+    <div class="mc"><div class="mcl">DB Complaints</div><div class="mcv" id="an-db">—</div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+// Auto-detect API URL (same origin when deployed)
+const API = window.location.origin;
+let currentLang = 'en', lastComplaintId = null, chartsInit = false;
+let mobileVerified = false, currentMobile = '';
+
+const TT = {
+  water:"Water supply has been completely disrupted in Ward 7, Vijay Nagar for the past 3 days. 45+ households affected. Main pipeline near the chowk appears to have a major leak. Immediate repair required urgently.",
+  road:"Massive pothole on AB Road near Palasia crossing. Multiple accidents this week. Two-wheelers at severe risk. Road surface completely deteriorated. Emergency repair needed immediately.",
+  power:"Power outage for 18 continuous hours in our colony. Transformer appears to have blown. Elderly and critically ill residents suffering. Please dispatch repair team immediately.",
+  sanit:"Garbage not collected for 5 days. Waste piling near local market. Health hazard situation. Stray animals spreading garbage. Immediate collection and sanitization required.",
+  hindi:"हमारे मोहल्ले में 3 दिन से बिजली नहीं है। ट्रांसफार्मर जल गया है। बच्चे और बुजुर्ग बहुत परेशान हैं। कृपया तुरंत मरम्मत करवाएं।"
+};
+const PRIORITY_COLORS = {critical:'cr',high:'ca',medium:'cb',low:'cg'};
+const DEPT_COLORS = {'Water Supply':'cb','Roads & PWD':'cg','Electricity':'ca','Sanitation':'cr','Public Services':'cp2','Healthcare':'cb'};
+
+// ── API FETCH ─────────────────────────────────────────────────────────────────
+async function apiFetch(method, path, body=null) {
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if(body) opts.body = JSON.stringify(body);
+  const r = await fetch(API+path, opts);
+  const d = await r.json();
+  if(!r.ok) throw new Error(d.error||`HTTP ${r.status}`);
+  return d;
+}
+
+// ── API STATUS ────────────────────────────────────────────────────────────────
+async function checkApiStatus() {
+  try {
+    const d = await apiFetch('GET','/api/health');
+    document.getElementById('api-status-pill').innerHTML='<span class="livdot"></span>API Online · v'+d.version;
+    document.getElementById('api-status-pill').className='npill npill-live';
+  } catch(e) {
+    document.getElementById('api-status-pill').innerHTML='API Offline';
+    document.getElementById('api-status-pill').className='npill npill-urg';
+  }
+}
+
+
+// ── SUBMIT COMPLAINT ──────────────────────────────────────────────────────────
+function selL(btn,lang){ document.querySelectorAll('#lang-row .lbtn').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); currentLang=lang; }
+function tpl(k){ document.getElementById('inpC').value=TT[k]; document.getElementById('aibox').classList.remove('show'); }
+
+async function submitComplaint() {
+  const text = document.getElementById('inpC').value.trim();
+  const name = document.getElementById('inpN').value.trim();
+  const mobile = document.getElementById('inpM').value.trim();
+  if(!name){ alert('Naam zaroor bharein'); return; }
+  if(!mobile || mobile.length<10){ alert('Mobile number zaroor bharein'); return; }
+
+  if(!text){ document.getElementById('inpC').focus(); return; }
+  const btn=document.getElementById('mainBtn');
+  btn.innerHTML='<span class="spinner"></span>AI Analyzing &amp; Saving…'; btn.disabled=true;
+  try {
+    const d = await apiFetch('POST','/api/complaints',{
+      citizen_name:name, mobile, district:document.getElementById('inpD').value,
+      area:document.getElementById('inpA').value, language:currentLang, raw_text:text
+    });
+    const r=d.ai_result; lastComplaintId=d.complaint_id;
+    document.getElementById('rDept').textContent=r.department;
+    document.getElementById('rPri').textContent=r.priority+' priority';
+    document.getElementById('rPri').className='chip '+PRIORITY_COLORS[r.priority];
+    document.getElementById('rCat').textContent=r.category;
+    document.getElementById('rConf').textContent=r.confidence+'%';
+    document.getElementById('rEta').textContent=r.eta;
+    document.getElementById('rOff').textContent=r.officer;
+    document.getElementById('rDeptF').textContent=r.dept_full;
+    document.getElementById('rSum').textContent=r.summary;
+    document.getElementById('cpIdBtn').textContent='Copy: '+d.complaint_id;
+    document.getElementById('aibox').classList.add('show');
+    setTimeout(()=>document.getElementById('cbarF').style.width=r.confidence+'%',100);
+  } catch(e){
+    alert('Error: '+e.message);
+  } finally {
+    btn.innerHTML='🤖 Analyze &amp; Submit with AI'; btn.disabled=false;
+  }
+}
+
+function cpId(btn){navigator.clipboard.writeText(lastComplaintId||'').catch(()=>{});btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy: '+(lastComplaintId||'ID'),1500);}
+function trackThis(){document.getElementById('trid').value=lastComplaintId||'';sw('tracking',document.querySelectorAll('.ntab')[2]);trackComplaint();}
+function reset2(){document.getElementById('inpC').value='';document.getElementById('aibox').classList.remove('show');}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+async function loadDashboard(){
+  try {
+    const [ana,comps]=await Promise.all([apiFetch('GET','/api/analytics'),apiFetch('GET','/api/complaints?limit=6')]);
+    animCount('m-total',ana.summary.total_complaints);
+    animCount('m-resolved',ana.summary.resolved_today);
+    document.getElementById('m-avg').textContent=ana.summary.avg_resolution_days+'d';
+    document.getElementById('m-acc').textContent=ana.summary.ai_accuracy+'%';
+    document.getElementById('critical-pill').textContent=(ana.priority_stats.critical||0)+' Critical';
+    const cl=document.getElementById('complaint-list');
+    cl.innerHTML=comps.complaints.length?comps.complaints.map((c,i)=>`
+      <div class="ci" style="animation-delay:${i*.05}s" onclick="quickTrack('${c.complaint_id}')">
+        <span class="cid">${c.complaint_id}</span>
+        <span class="ctxt">${c.raw_text}</span>
+        <span class="chip ${DEPT_COLORS[c.department]||'cb'}" style="font-size:10px;">${c.department||'—'}</span>
+        <span class="cst"><span class="sd ${statusDot(c.status)}"></span>${fmtStatus(c.status)}</span>
+      </div>`).join(''):'<div style="font-size:12px;color:var(--text2);padding:8px;">Abhi koi complaint nahi hai।</div>';
+    const depts=ana.departments,maxC=Math.max(...depts.map(d=>d.complaint_count),1);
+    const DC=['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+    document.getElementById('dept-bars').innerHTML=depts.map((d,i)=>`
+      <div class="dbrow">
+        <span class="dbl">${d.short_name?.charAt(0).toUpperCase()+d.short_name?.slice(1)}</span>
+        <div class="dbt"><div class="dbf" style="background:${DC[i%DC.length]}" data-w="${Math.round(d.complaint_count/maxC*100)}"></div></div>
+        <span class="dbn">${d.complaint_count}</span>
+      </div>`).join('');
+    setTimeout(()=>document.querySelectorAll('.dbf').forEach(el=>{el.style.width=el.dataset.w+'%';}),80);
+    const urgents=comps.complaints.filter(c=>c.priority==='critical'||c.priority==='high');
+    document.getElementById('priority-list').innerHTML=urgents.length?urgents.slice(0,5).map((c,i)=>`
+      <div class="pi" style="animation-delay:${i*.05}s">
+        <span class="pb p${c.priority==='critical'?'ct':c.priority==='high'?'ht':'mt'}">${c.priority}</span>
+        <span class="ptxt">${c.raw_text}</span>
+        <span class="page">${c.updated_at?.slice(0,10)||'today'}</span>
+      </div>`).join(''):'<div style="font-size:12px;color:var(--text2);padding:8px;">Koi critical complaint nahi hai। ✓</div>';
+  } catch(e){
+    document.getElementById('complaint-list').innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px;">Error: ${e.message}</div>`;
+  }
+}
+function statusDot(s){return {open:'so',in_progress:'sp',resolved:'sr'}[s]||'so';}
+function fmtStatus(s){return {open:'Open',in_progress:'In Progress',resolved:'Resolved',closed:'Closed'}[s]||s;}
+function animCount(id,target){const el=document.getElementById(id);let cur=0;const step=Math.ceil(target/40);const iv=setInterval(()=>{cur=Math.min(cur+step,target);el.textContent=cur.toLocaleString();if(cur>=target)clearInterval(iv);},22);}
+
+// ── TRACKING ──────────────────────────────────────────────────────────────────
+function quickTrack(id){document.getElementById('trid').value=id;sw('tracking',document.querySelectorAll('.ntab')[2]);trackComplaint();}
+
+async function trackComplaint(){
+  const cid=document.getElementById('trid').value.trim();
+  if(!cid) return;
+  document.getElementById('tl-area').innerHTML='<div style="font-size:12px;color:var(--text2);padding:8px;">Loading…</div>';
+  try {
+    const d=await apiFetch('GET','/api/complaints/'+cid);
+    renderTimeline(d.complaint,d.timeline);
+  } catch(e){
+    document.getElementById('tl-area').innerHTML=`<div style="font-size:12px;color:var(--red);padding:8px;">Complaint nahi mila: ${cid}</div>`;
+  }
+}
+
+function renderTimeline(c,timeline){
+  const priChip=c.priority?`<span class="chip ${PRIORITY_COLORS[c.priority]||'cb'}" style="margin-left:6px;font-size:10px;">${c.priority}</span>`:'';
+  const deptChip=c.department?`<span class="chip ${DEPT_COLORS[c.department]||'cb'}">${c.department}</span>`:'';
+  const updater=`<div class="status-panel"><span style="font-size:11px;color:var(--text2);margin-right:8px;">Status update karein:</span>
+    <select class="status-select" id="upd-status-${c.complaint_id}">
+      <option value="open" ${c.status==='open'?'selected':''}>Open</option>
+      <option value="in_progress" ${c.status==='in_progress'?'selected':''}>In Progress</option>
+      <option value="resolved" ${c.status==='resolved'?'selected':''}>Resolved</option>
+      <option value="closed" ${c.status==='closed'?'selected':''}>Closed</option>
+    </select>
+    <button class="upd-btn" onclick="updateStatus('${c.complaint_id}')">Update</button></div>`;
+  const tlHtml=(timeline&&timeline.length)?timeline.map((t,i,arr)=>`
+    <div class="tls ${t.status==='done'?'dn2':t.status==='active'?'ac2':'pd2'}">
+      <div class="tlw"><div class="tldot"></div>${i<arr.length-1?'<div class="tlline"></div>':''}</div>
+      <div class="tlc"><div class="tlt">${t.event_title}</div><div class="tld">${t.event_desc||''}</div><div class="tlts">${t.event_time}</div></div>
+    </div>`).join(''):'<div style="font-size:12px;color:var(--text2);">No timeline yet.</div>';
+  document.getElementById('tl-area').innerHTML=`<div class="tlcard">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
+      <div>
+        <div style="font-size:15px;font-weight:600;margin-bottom:3px;">${c.complaint_id}</div>
+        <div style="font-size:10px;color:var(--text2);font-family:'DM Mono',monospace;">${c.created_at} · ${c.area||''}, ${c.district||''}</div>
+        <div style="margin-top:6px;font-size:12px;color:var(--text2);">${c.raw_text}</div>
+      </div>
+      <div style="text-align:right;">${deptChip}${priChip}<div style="font-size:10px;color:var(--text2);margin-top:4px;">AI: ${c.ai_confidence||'—'}% · Lang: ${c.language||'en'}</div></div>
+    </div>
+    <div class="div2"></div>
+    <div>${tlHtml}</div>
+    ${updater}</div>`;
+}
+
+async function updateStatus(cid){
+  const sel=document.getElementById('upd-status-'+cid);
+  if(!sel) return;
+  try{await apiFetch('PATCH','/api/complaints/'+cid,{status:sel.value});trackComplaint();}
+  catch(e){alert('Update failed: '+e.message);}
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+async function loadAnalytics(){
+  if(chartsInit) return; chartsInit=true;
+  if(typeof Chart==='undefined') return;
+  try {
+    const d=await apiFetch('GET','/api/analytics');
+    document.getElementById('an-db').textContent=d.summary.total_db_complaints;
+    const depts=d.departments;
+    new Chart(document.getElementById('cc'),{type:'doughnut',data:{labels:depts.map(d=>d.name),datasets:[{data:depts.map(d=>d.complaint_count),backgroundColor:['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'],borderWidth:2,borderColor:'rgba(255,255,255,.9)',hoverOffset:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},padding:7,boxWidth:10}}}}});
+    const weekly=d.weekly_trend;
+    new Chart(document.getElementById('ct2'),{type:'line',data:{labels:weekly.map(w=>w.week),datasets:[{label:'Submitted',data:weekly.map(w=>w.submitted),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.07)',fill:true,tension:.4,pointRadius:3,borderWidth:2},{label:'Resolved',data:weekly.map(w=>w.resolved),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.07)',fill:true,tension:.4,pointRadius:3,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},usePointStyle:true,padding:8}}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}}}}});
+    const rtKeys=Object.keys(d.resolution_times),rtVals=Object.values(d.resolution_times);
+    new Chart(document.getElementById('cr'),{type:'bar',data:{labels:rtKeys,datasets:[{label:'Avg days',data:rtVals,backgroundColor:['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'],borderRadius:5,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{font:{size:10}}}}}});
+    const ai=d.ai_accuracy_trend;
+    new Chart(document.getElementById('cai'),{type:'line',data:{labels:ai.map(a=>a.month),datasets:[{label:'Accuracy %',data:ai.map(a=>a.accuracy),borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,.1)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#8b5cf6',borderWidth:2.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{min:85,max:100,ticks:{font:{size:10}}}}}});
+  } catch(e){console.warn('Analytics error:',e.message);}
+}
+
+// ── TAB SWITCHER ──────────────────────────────────────────────────────────────
+function sw(n,t){
+  const idMap={submit:'vs',dashboard:'vd',tracking:'vt',analytics:'va'};
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.ntab').forEach(x=>x.classList.remove('on'));
+  document.getElementById(idMap[n]).classList.add('on'); t.classList.add('on');
+  if(n==='dashboard') loadDashboard();
+  if(n==='analytics') loadAnalytics();
+}
+
+// ── MIC / VOICE INPUT ─────────────────────────────────────────────────────────
+let recognition=null,isRecording=false,micTimer=null;
+function toggleMic(){isRecording?stopMic():startMic();}
+function startMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){alert('Chrome browser use karein — voice input ke liye।');return;}
+  recognition=new SR();
+  recognition.continuous=true;recognition.interimResults=true;
+  recognition.lang={en:'en-IN',hi:'hi-IN',mr:'mr-IN',gu:'gu-IN',ta:'ta-IN',te:'te-IN'}[currentLang]||'hi-IN';
+  let final=document.getElementById('inpC').value;
+  recognition.onresult=(e)=>{
+    let interim='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const t=e.results[i][0].transcript;
+      if(e.results[i].isFinal) final+=(final?' ':'')+t;
+      else interim=t;
+    }
+    document.getElementById('inpC').value=final+(interim?' '+interim:'');
+  };
+  recognition.onerror=(e)=>{if(e.error==='not-allowed')alert('Microphone permission do।');stopMic();};
+  recognition.onend=()=>{if(isRecording)stopMic();};
+  recognition.start();
+  isRecording=true;
+  document.getElementById('micBtn').classList.add('rec');
+  document.getElementById('micStatus').classList.add('show');
+  micTimer=setTimeout(stopMic,30000);
+}
+function stopMic(){
+  isRecording=false;
+  if(recognition){try{recognition.stop();}catch(e){}recognition=null;}
+  if(micTimer){clearTimeout(micTimer);micTimer=null;}
+  document.getElementById('micBtn').classList.remove('rec');
+  document.getElementById('micStatus').classList.remove('show');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+checkApiStatus();
+setInterval(checkApiStatus, 20000);
+</script>
+</body>
+</html>
